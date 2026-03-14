@@ -1,0 +1,10 @@
+# Python 
+__pycache__/ 
+*.pyc 
+.env 
+data/raw/ 
+data/interim/ 
+models/ 
+.ipynb_checkpoints/ 
+*.nc 
+*.tif 
