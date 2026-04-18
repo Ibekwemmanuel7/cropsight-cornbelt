@@ -12,7 +12,7 @@
 
 ## Overview
 
-CropSight CornBelt is a multi-module geoscience ML system that predicts county-level corn yield across Iowa, Illinois, and Indiana using 24 years of satellite vegetation indices, reanalysis weather data, and soil properties. The system integrates physics-based crop growth knowledge directly into the machine learning pipeline — a physics-informed neural network (PINN) with a hybrid loss function that penalises agronomically implausible predictions.
+CropSight CornBelt is a multi-module geoscience ML system that predicts county-level corn yield across Iowa, Illinois, and Indiana using 24 years of satellite vegetation indices, reanalysis weather data, and soil properties. The system integrates physics-based crop growth knowledge directly into the machine learning pipeline - a physics-informed neural network (PINN) with a hybrid loss function that penalises agronomically implausible predictions.
 
 This project is the second in a series of end-to-end atmospheric/geoscience ML systems, following [HyperWind-Now](https://github.com/Ibekwemmanuel7/hyperwind-now) (drone wind hazard forecasting). Both systems follow the same architectural philosophy: multi-module pipelines where domain physics constrain the ML, not just inform it.
 
@@ -25,7 +25,7 @@ This project is the second in a series of end-to-end atmospheric/geoscience ML s
 | PINN (physics-informed) | 13.6 | 10.7 | 0.334 |
 | Stacking ensemble | 14.0 | 11.1 | 0.286 |
 
-> XGBoost RMSE of 12.5 bu/acre represents ~6% error on a ~200 bu/acre baseline — competitive with published academic benchmarks for county-level yield forecasting using satellite data alone, without in-season field surveys.
+> XGBoost RMSE of 12.5 bu/acre represents ~6% error on a ~200 bu/acre baseline - competitive with published academic benchmarks for county-level yield forecasting using satellite data alone, without in-season field surveys.
 
 ---
 
@@ -33,23 +33,23 @@ This project is the second in a series of end-to-end atmospheric/geoscience ML s
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  MODULE 1 — Data Ingestion                                  │
+│  MODULE 1 - Data Ingestion                                  │
 │  MODIS NDVI · ERA5 weather · USDA NASS yield · SSURGO soil │
 └──────────────────────────┬──────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
-│  MODULE 2 — Feature Engineering                             │
+│  MODULE 2 - Feature Engineering                             │
 │  Phenology engine · Weather stress indices · DSSAT-proxy   │
 │  SOS/EOS · GDD · SPI · VCI · Penman-Monteith PET          │
 └──────────────────────────┬──────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
-│  MODULE 3 — Modeling                                        │
+│  MODULE 3 - Modeling                                        │
 │  XGBoost baseline → LSTM temporal → PINN → Ensemble        │
 └──────────────────────────┬──────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
-│  MODULE 4 — Streamlit Dashboard                             │
+│  MODULE 4 - Streamlit Dashboard                             │
 │  Yield map · Season view · Explainability · Hindcast        │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -67,7 +67,7 @@ This project is the second in a series of end-to-end atmospheric/geoscience ML s
 | [USDA CDL](https://nassgeodata.gmu.edu/CropScape/) | Cropland mask | 30 m, annual | 2008–2023 | REST API |
 | [SSURGO](https://www.nrcs.usda.gov/resources/data-and-reports/ssurgo) | Soil properties | County | Static | USDA Soil Data Access |
 
-**Target region:** Iowa (IA), Illinois (IL), Indiana (IN) — 293 counties  
+**Target region:** Iowa (IA), Illinois (IL), Indiana (IN) - 293 counties  
 **Ground truth:** USDA NASS county-level corn grain yield, bu/acre
 
 ---
@@ -79,32 +79,32 @@ This project is the second in a series of end-to-end atmospheric/geoscience ML s
 ### Phenology features (15)
 Extracted from MODIS NDVI time series using Savitzky-Golay smoothing + cubic spline interpolation:
 
-- **SOS/EOS DOY** — Start and End of Season (amplitude-based threshold method)
-- **Peak NDVI / Peak DOY** — maximum canopy greenness and its timing
-- **Integrated NDVI** — area under the NDVI curve (cumulative photosynthesis proxy)
-- **Greenup rate / Senescence rate** — canopy development and decline speed
-- **VCI** — Vegetation Condition Index, normalised against 24-year historical extremes per county
-- **Window means** — mean NDVI and VCI during vegetative, silking, and grain-fill phases
+- **SOS/EOS DOY** - Start and End of Season (amplitude-based threshold method)
+- **Peak NDVI / Peak DOY** - maximum canopy greenness and its timing
+- **Integrated NDVI** - area under the NDVI curve (cumulative photosynthesis proxy)
+- **Greenup rate / Senescence rate** - canopy development and decline speed
+- **VCI** - Vegetation Condition Index, normalised against 24-year historical extremes per county
+- **Window means** - mean NDVI and VCI during vegetative, silking, and grain-fill phases
 
 The **silking window (DOY 180–220)** is the most yield-critical period; heat or drought stress during pollination causes irreversible yield loss.
 
 ### Weather stress indices (11)
-Computed per phenological window rather than calendar months — agronomically the right unit:
+Computed per phenological window rather than calendar months - agronomically the right unit:
 
-- **GDD** — Growing Degree Days (base 10°C, ceiling 30°C, modified sinusoidal method)
-- **SPI** — Standardized Precipitation Index (negative = drought)
-- **Heat stress days** — days with Tmax > 35°C
-- **VPD** — Vapor Pressure Deficit (Tetens equation from ERA5 T2m + dewpoint)
-- **Precipitation** — total by window
+- **GDD** - Growing Degree Days (base 10°C, ceiling 30°C, modified sinusoidal method)
+- **SPI** - Standardized Precipitation Index (negative = drought)
+- **Heat stress days** - days with Tmax > 35°C
+- **VPD** - Vapor Pressure Deficit (Tetens equation from ERA5 T2m + dewpoint)
+- **Precipitation** - total by window
 
 ### DSSAT-proxy water balance (7)
-A simplified single-layer soil water balance that replicates the key outputs of the DSSAT crop simulation model without requiring DSSAT installation or calibration. The central output is `water_stress_frac = AET / PET` — the ratio of actual to potential evapotranspiration. This feature serves a dual role: as a predictive input and as the physical constraint in the PINN loss function.
+A simplified single-layer soil water balance that replicates the key outputs of the DSSAT crop simulation model without requiring DSSAT installation or calibration. The central output is `water_stress_frac = AET / PET` - the ratio of actual to potential evapotranspiration. This feature serves a dual role: as a predictive input and as the physical constraint in the PINN loss function.
 
-- **PET** — Potential ET via Hargreaves-Samani method (FAO-56 extraterrestrial radiation)
-- **AET** — Actual ET limited by soil water availability
-- **water_stress_frac** — AET/PET ratio (1 = no stress, 0 = complete stress)
-- **soil_water_deficit_mm** — cumulative seasonal water deficit
-- **drought_index** — 1 − water_stress_frac
+- **PET** - Potential ET via Hargreaves-Samani method (FAO-56 extraterrestrial radiation)
+- **AET** - Actual ET limited by soil water availability
+- **water_stress_frac** - AET/PET ratio (1 = no stress, 0 = complete stress)
+- **soil_water_deficit_mm** - cumulative seasonal water deficit
+- **drought_index** - 1 − water_stress_frac
 
 ### Soil properties (6, static)
 Area-weighted SSURGO topsoil (0–30 cm) means: sand %, clay %, organic matter %, available water capacity, pH, CEC.
@@ -116,11 +116,11 @@ Area-weighted SSURGO topsoil (0–30 cm) means: sand %, clay %, organic matter %
 
 ## Model architecture
 
-### Stage 3A — XGBoost baseline
+### Stage 3A - XGBoost baseline
 Gradient boosted trees on the full 40-feature tabular matrix. Trained with early stopping on the 2022 validation year. Provides the strongest single-model performance and the SHAP interpretability layer. Hyperparameters: 800 estimators, learning rate 0.03, max depth 5, L1/L2 regularisation.
 
-### Stage 3B — CropLSTM
-Two-layer LSTM with static feature fusion. Time-varying features (phenology + weather by growth stage) are passed through the LSTM encoder; static features (soil, year trend) are concatenated with the final hidden state before the MLP head. This captures the sequential nature of the growing season — a hot July means different things depending on what June looked like.
+### Stage 3B - CropLSTM
+Two-layer LSTM with static feature fusion. Time-varying features (phenology + weather by growth stage) are passed through the LSTM encoder; static features (soil, year trend) are concatenated with the final hidden state before the MLP head. This captures the sequential nature of the growing season - a hot July means different things depending on what June looked like.
 
 ```
 Input: (batch, 23 time-varying features, 1)  →  LSTM (hidden=128, layers=2)
@@ -130,7 +130,7 @@ Input: (batch, 23 time-varying features, 1)  →  LSTM (hidden=128, layers=2)
 
 Training: AdamW, lr=1e-3, ReduceLROnPlateau, early stopping patience=25, gradient clipping=1.0.
 
-### Stage 3C — CropPINN (physics-informed)
+### Stage 3C - CropPINN (physics-informed)
 Standard MLP (128→64→32→1) with a **hybrid loss function**:
 
 ```
@@ -142,11 +142,11 @@ L_physics = mean(ReLU(ŷ(x) − ŷ(x + δ_stress)))
             where δ_stress perturbs water_stress_frac upward by 0.1
 ```
 
-The physics penalty `L_physics` penalises any batch sample where increasing available water (higher `water_stress_frac`) does not increase predicted yield — enforcing the agronomic direction of the stress-yield relationship. This is the direct analog of the EnKF observation constraint in [HyperWind-Now](https://github.com/Ibekwemmanuel7/hyperwind-now): physics knowledge constrain the model during training, not just at inference.
+The physics penalty `L_physics` penalises any batch sample where increasing available water (higher `water_stress_frac`) does not increase predicted yield - enforcing the agronomic direction of the stress-yield relationship. This is the direct analog of the EnKF observation constraint in [HyperWind-Now](https://github.com/Ibekwemmanuel7/hyperwind-now): physics knowledge constrain the model during training, not just at inference.
 
 λ = 0.15 was selected to balance data fit against constraint satisfaction.
 
-### Stage 3D — Stacking ensemble
+### Stage 3D - Stacking ensemble
 Ridge regression meta-learner (α=1.0) on base model predictions. 90% prediction intervals via residual bootstrap from training set errors.
 
 ---
@@ -157,9 +157,9 @@ From the correlation analysis on the 2000–2021 training set:
 
 | Rank | Feature | r with yield | Interpretation |
 |------|---------|:------------:|----------------|
-| 1 | `peak_ndvi` | +0.587 | Peak canopy greenness — proxy for maximum photosynthetic capacity |
-| 2 | `vci_silking` | +0.573 | Drought stress during pollination — most yield-critical window |
-| 3 | `ndvi_silking` | +0.571 | Raw NDVI during silking — corroborates VCI signal |
+| 1 | `peak_ndvi` | +0.587 | Peak canopy greenness - proxy for maximum photosynthetic capacity |
+| 2 | `vci_silking` | +0.573 | Drought stress during pollination - most yield-critical window |
+| 3 | `ndvi_silking` | +0.571 | Raw NDVI during silking - corroborates VCI signal |
 | 4 | `greenup_rate` | +0.498 | Fast canopy development → good early-season conditions |
 | 5 | `senescence_rate` | −0.477 | Fast crop death → stress-induced early senescence |
 | 6 | `year_trend` | +0.452 | Long-term genetic/agronomic improvement |
@@ -301,13 +301,13 @@ pip install -r requirements.txt
 
 The Streamlit dashboard (`dashboard.py`) has four views:
 
-**🗺 Yield Map** — Interactive Plotly choropleth of Iowa/IL/IN counties. Toggle between actual yield, predicted yield, prediction error, and yield anomaly for any year 2000–2023. The 2012 drought is visually dramatic: Illinois state mean drops to ~95 bu/acre, nearly half of a normal year.
+**🗺 Yield Map** - Interactive Plotly choropleth of Iowa/IL/IN counties. Toggle between actual yield, predicted yield, prediction error, and yield anomaly for any year 2000–2023. The 2012 drought is visually dramatic: Illinois state mean drops to ~95 bu/acre, nearly half of a normal year.
 
-**📈 Season View** — Per-county NDVI trajectory through the growing season with phenological phase overlays (Planting / Vegetative / Silking / Grain fill). Compare any two years side by side. Historical yield trend 2000–2023 with XGBoost prediction overlay.
+**📈 Season View** - Per-county NDVI trajectory through the growing season with phenological phase overlays (Planting / Vegetative / Silking / Grain fill). Compare any two years side by side. Historical yield trend 2000–2023 with XGBoost prediction overlay.
 
-**🔍 Explainability** — Feature correlation bar chart (top 20 predictors), per-county z-score profile showing which features drove an unusual prediction, and the physics constraint validation scatter confirming the water stress relationship is correctly signed.
+**🔍 Explainability** - Feature correlation bar chart (top 20 predictors), per-county z-score profile showing which features drove an unusual prediction, and the physics constraint validation scatter confirming the water stress relationship is correctly signed.
 
-**⏪ Hindcast** — Select any historical year and see the full county-level forecast. The RMSE-by-year bar chart (2012 highlighted in red) demonstrates that the model correctly identifies drought years as harder to predict — the signal is real, not noise.
+**⏪ Hindcast** - Select any historical year and see the full county-level forecast. The RMSE-by-year bar chart (2012 highlighted in red) demonstrates that the model correctly identifies drought years as harder to predict - the signal is real, not noise.
 
 ---
 
@@ -315,18 +315,18 @@ The Streamlit dashboard (`dashboard.py`) has four views:
 
 Both CropSight and HyperWind-Now follow the same research philosophy: **domain physics should constrain ML, not just inform it.**
 
-In HyperWind-Now, an Ensemble Kalman Filter assimilates physical observations to correct the TrajGRU state during inference. In CropSight, the DSSAT-proxy water balance is embedded directly in the PINN loss function — the model is penalised during training whenever it violates the agronomic direction of the stress-yield relationship.
+In HyperWind-Now, an Ensemble Kalman Filter assimilates physical observations to correct the TrajGRU state during inference. In CropSight, the DSSAT-proxy water balance is embedded directly in the PINN loss function - the model is penalised during training whenever it violates the agronomic direction of the stress-yield relationship.
 
-This is a more architecturally honest approach than simply adding physical features as model inputs. Physical inputs can be ignored by a sufficiently flexible model; a physics penalty in the loss cannot be bypassed. The difference shows up most in data-sparse conditions — counties with few historical observations or anomalous years where data-driven models tend to extrapolate unrealistically.
+This is a more architecturally honest approach than simply adding physical features as model inputs. Physical inputs can be ignored by a sufficiently flexible model; a physics penalty in the loss cannot be bypassed. The difference shows up most in data-sparse conditions - counties with few historical observations or anomalous years where data-driven models tend to extrapolate unrealistically.
 
 ---
 
 ## Limitations and future work
 
 **Current limitations:**
-- Weather features use proxy reconstruction rather than full ERA5 downloads — downloading ERA5 for all 24 years and replacing the proxy with real gridded weather data will meaningfully improve the weather stress features and likely reduce RMSE by 2–4 bu/acre.
+- Weather features use proxy reconstruction rather than full ERA5 downloads - downloading ERA5 for all 24 years and replacing the proxy with real gridded weather data will meaningfully improve the weather stress features and likely reduce RMSE by 2–4 bu/acre.
 - Soil data uses STATSGO2 state-level representative values with county-level noise rather than true SSURGO county means. Replacing with the Soil Data Access API values is a straightforward improvement.
-- The CDL cropland mask is not yet applied to NDVI aggregation — applying it would sharpen the NDVI signal by removing non-corn pixels from county means.
+- The CDL cropland mask is not yet applied to NDVI aggregation - applying it would sharpen the NDVI signal by removing non-corn pixels from county means.
 - The ensemble underperforms individual models due to high base model correlation and negative meta-learner weights. A larger, more diverse model pool (e.g. Random Forest + Ridge + temporal model) would improve ensemble stability.
 
 **Planned extensions:**
@@ -365,4 +365,4 @@ Atmospheric scientist and data engineer specialising in geoscience ML, remote se
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](LICENSE) for details.
