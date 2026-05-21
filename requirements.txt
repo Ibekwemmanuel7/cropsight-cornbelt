@@ -33,3 +33,6 @@ shap>=0.44.0
 matplotlib>=3.8.2
 plotly>=5.18.0
 streamlit>=1.29.0
+
+# Dev / testing
+pytest>=7.4.0
