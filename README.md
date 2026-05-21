@@ -20,12 +20,13 @@ This project is the second in a series of end-to-end atmospheric/geoscience ML s
 
 | Model | RMSE (bu/acre) | MAE (bu/acre) | R² |
 |-------|:--------------:|:-------------:|:---:|
-| XGBoost baseline | **12.5** | 9.7 | 0.432 |
+| **XGBoost** (production) | **12.5** | 9.7 | 0.432 |
+| **PINN** (physics-informed) | 13.6 | 10.7 | 0.334 |
 | LSTM temporal | 12.7 | 10.1 | 0.415 |
-| PINN (physics-informed) | 13.6 | 10.7 | 0.334 |
-| Stacking ensemble | 14.0 | 11.1 | 0.286 |
 
 > XGBoost RMSE of 12.5 bu/acre represents ~6% error on a ~200 bu/acre baseline - competitive with published academic benchmarks for county-level yield forecasting using satellite data alone, without in-season field surveys.
+
+We ship **XGBoost + PINN as a calibrated pair**: XGBoost provides the headline point forecast and SHAP-based per-county explanation, and the PINN supplies the physics-constrained sanity check. An exploratory Ridge stacking ensemble was trained and discarded — it underperformed both base models (RMSE 14.0) because the base predictions were too correlated for the meta-learner to add value. The negative empirical result is documented in `module3_modeling.ipynb` for reproducibility.
 
 ![County-level test-set predictions vs. observed yield, with the 2012 drought and 2020 strong-year envelopes highlighted](docs/images/model_predictions_test.png)
 
@@ -47,7 +48,7 @@ This project is the second in a series of end-to-end atmospheric/geoscience ML s
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
 │  MODULE 3 - Modeling                                        │
-│  XGBoost baseline → LSTM temporal → PINN → Ensemble        │
+│  XGBoost baseline → LSTM temporal → PINN (production pair) │
 └──────────────────────────┬──────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
@@ -154,8 +155,12 @@ The physics penalty `L_physics` penalises any batch sample where increasing avai
 
 λ = 0.15 was selected to balance data fit against constraint satisfaction.
 
-### Stage 3D - Stacking ensemble
-Ridge regression meta-learner (α=1.0) on base model predictions. 90% prediction intervals via residual bootstrap from training set errors.
+### Stage 3D - Calibration and uncertainty
+The production setup is **XGBoost + PINN as a calibrated pair**, not a stacking ensemble. XGBoost is the headline point forecast (lowest test RMSE and the source of SHAP explanations); the PINN serves as a physics-constrained sanity check, flagging predictions where the data-driven model violates the agronomic water-stress direction.
+
+90% prediction intervals are produced via residual bootstrap from training-set errors. (Planned upgrade: replace with split conformal prediction for guaranteed coverage.)
+
+**Why no stacking ensemble?** A Ridge meta-learner over (XGBoost, LSTM, PINN) was trained and discarded: it produced RMSE 14.0 on the test set — worse than every base model. The base models' predictions were too correlated (all three see the same features) for a linear meta-learner to extract residual signal. The notebook retains the code as a documented null result.
 
 ---
 
@@ -194,7 +199,7 @@ cropsight-cornbelt/
 │
 ├── module1_data_ingestion.ipynb          # Data download and validation
 ├── module2_feature_engineering.ipynb     # Phenology, weather, water balance
-├── module3_modeling.ipynb                # XGBoost, LSTM, PINN, ensemble
+├── module3_modeling.ipynb                # XGBoost, LSTM, PINN, calibration
 │
 ├── dashboard.py                          # Streamlit dashboard (Module 4)
 │
@@ -221,7 +226,7 @@ cropsight-cornbelt/
 │   ├── xgboost_baseline.json             # Trained XGBoost model
 │   ├── lstm_best.pt                      # Best LSTM checkpoint
 │   ├── pinn_best.pt                      # Best PINN checkpoint
-│   ├── meta_learner.joblib               # Stacking ensemble weights
+│   ├── meta_learner.joblib               # Stacking ensemble (null result, kept for reproducibility)
 │   └── scaler.joblib                     # StandardScaler (fit on train)
 │
 ├── .env                                  # API keys (never commit)
@@ -340,7 +345,7 @@ This is a more architecturally honest approach than simply adding physical featu
 - Weather features use proxy reconstruction rather than full ERA5 downloads - downloading ERA5 for all 24 years and replacing the proxy with real gridded weather data will meaningfully improve the weather stress features and likely reduce RMSE by 2–4 bu/acre.
 - Soil data uses STATSGO2 state-level representative values with county-level noise rather than true SSURGO county means. Replacing with the Soil Data Access API values is a straightforward improvement.
 - The CDL cropland mask is not yet applied to NDVI aggregation - applying it would sharpen the NDVI signal by removing non-corn pixels from county means.
-- The ensemble underperforms individual models due to high base model correlation and negative meta-learner weights. A larger, more diverse model pool (e.g. Random Forest + Ridge + temporal model) would improve ensemble stability.
+- The stacking ensemble was an empirical null — base-model predictions are too correlated for a linear meta-learner to add value. A more diverse base pool (e.g. Random Forest + Ridge + a temporal model) or a non-linear meta-learner could potentially recover ensemble gains in future work.
 
 **Planned extensions:**
 - In-season forecasting: retrain with features available at each week of the season to produce a forecast that updates as the season progresses

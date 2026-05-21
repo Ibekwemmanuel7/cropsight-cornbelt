@@ -1,10 +1,17 @@
-# Python 
-__pycache__/ 
-*.pyc 
-.env 
-data/raw/ 
-data/interim/ 
-models/ 
-.ipynb_checkpoints/ 
-*.nc 
-*.tif 
+# Python
+__pycache__/
+*.pyc
+.env
+data/raw/
+data/interim/
+models/
+.ipynb_checkpoints/
+*.nc
+*.tif
+
+# Local backups from patch scripts
+*.bak
+*.bak2
+
+# Strategy doc is shared via Cowork, not the public repo
+cropsight_strategy.docx
