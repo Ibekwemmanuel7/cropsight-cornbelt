@@ -1,0 +1,61 @@
+# Dependabot config.
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Chicago"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      runtime:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+        patterns:
+          - "fastapi"
+          - "uvicorn"
+          - "numpy"
+          - "pandas"
+          - "scipy"
+          - "scikit-learn"
+          - "pyarrow"
+      dev:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+        patterns:
+          - "pytest*"
+          - "ruff"
+          - "httpx"
+          - "pre-commit"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Chicago"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "ci"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Chicago"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"

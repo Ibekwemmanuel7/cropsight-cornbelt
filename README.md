@@ -373,6 +373,23 @@ python scripts/serve_api.py
 streamlit run dashboard.py
 ```
 
+### 7. Run the API in Docker
+```bash
+docker build -t cropsight-api .
+docker run --rm -p 8000:8000 \
+    -v "$(pwd)/data/interim:/app/data/interim:ro" \
+    cropsight-api
+curl http://localhost:8000/health
+```
+
+For one-command local dev with the data volume already wired up:
+
+```bash
+docker compose up --build
+```
+
+The Dockerfile is multi-stage (slim Python 3.12 base, non-root user, healthcheck against `/health`). The CI workflow builds the image on every push and PR to guard against regressions.
+
 ---
 
 ## Development
@@ -394,6 +411,8 @@ python -m pytest -k conformal   # run a subset
 CI runs lint + format check + the full test suite on Python 3.10 / 3.11 / 3.12 across every push to `main` and every pull request. Tests that require local data files (the parquets under `data/interim/`) are skipped automatically in CI; they run locally once you've executed `scripts/build_in_season_features.py` and `scripts/train_in_season_models.py`.
 
 Pre-commit hooks (configured in `.pre-commit-config.yaml`) run ruff, end-of-file fixer, trailing whitespace, and a check for accidentally committed large files. If a hook fails, the commit is blocked until you fix the issue or re-stage the auto-fixed files.
+
+Dependabot (configured in `.github/dependabot.yml`) opens grouped weekly PRs for pip, GitHub Actions, and Docker base-image updates. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the workflow expected on PRs, and [`CHANGELOG.md`](CHANGELOG.md) for the user-facing change log.
 
 ---
 

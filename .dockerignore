@@ -1,0 +1,67 @@
+# Mirrors .gitignore plus a few build-context-only exclusions.
+
+# Version control
+.git/
+.gitignore
+.github/
+
+# Python caches and venvs
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.python-version
+
+# Data and models (mount at runtime, not bake-in)
+data/
+models/
+*.nc
+*.tif
+*.parquet
+*.bak
+*.bak2
+
+# Notebooks - not needed in the API image
+*.ipynb
+.ipynb_checkpoints/
+dashboard.py
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Test + tool caches
+tests/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Docs and specs (not needed at runtime)
+docs/
+CHANGELOG.md
+CONTRIBUTING.md
+cropsight_strategy.docx
+
+# Scripts not used at runtime
+scripts/
+
+# Pre-commit + CI config (not needed inside image)
+.pre-commit-config.yaml
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Env files - never include secrets in an image
+.env

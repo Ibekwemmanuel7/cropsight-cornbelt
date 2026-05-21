@@ -1,0 +1,32 @@
+# Local development convenience: one-command stack with the forecast API
+# mounted against the host data/ directory so you can rebuild parquets and
+# the container picks them up without a rebuild.
+#
+# Usage:
+#   docker compose up --build
+#   curl http://localhost:8000/health
+#
+# Production deployment shouldn't use this compose file; see Dockerfile for
+# the image build and bring your own orchestrator (Fly.io, Cloud Run, ECS).
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cropsight-api:latest
+    container_name: cropsight-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Read-only mount of locally-built data into the container path the
+      # ForecastStore reads from (CROPSIGHT_DATA_DIR in the Dockerfile).
+      - ./data/interim:/app/data/interim:ro
+    environment:
+      - CROPSIGHT_DATA_DIR=/app/data/interim
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
