@@ -70,6 +70,30 @@ The absolute RMSE numbers above are higher than the full-season hindcast at the 
 
 Detailed plan: [`docs/specs/in_season_pipeline.md`](docs/specs/in_season_pipeline.md).
 
+### Serving forecasts: read-only API
+
+[`cropsight/api/`](cropsight/api/) exposes the leaderboard and per-county forecasts via FastAPI. Auto-generated OpenAPI docs at `/docs`. Endpoints:
+
+```
+GET  /health                                    service status, available weeks, backend
+GET  /counties                                  list of all 5-digit FIPS codes
+GET  /leaderboard                               horizon leaderboard with coverage + width
+GET  /forecast?fips=<fips>&week=<K>             single (county, week) point + interval
+GET  /forecast/county/{fips}/season             all six K forecasts for a county
+```
+
+Run locally:
+
+```bash
+python scripts/serve_api.py             # binds 127.0.0.1:8000
+curl 'http://localhost:8000/forecast?fips=19169&week=28'
+# {"fips":"19169","year":2023,"week_k":28,"cutoff_doy":196,
+#  "pred":175.3,"lower":148.85,"upper":201.75,"q_alpha":26.45,
+#  "alpha":0.1,"backend":"sklearn_hgb","observed_yield":204.1}
+```
+
+Tests in [`tests/test_api.py`](tests/test_api.py) (10 cases) cover happy paths, 404 on unknown FIPS, 400 on invalid week, 422 on missing parameters, OpenAPI schema validity, and full-season county responses.
+
 ---
 
 ## System architecture
