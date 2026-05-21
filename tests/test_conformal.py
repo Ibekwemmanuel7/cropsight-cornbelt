@@ -6,6 +6,7 @@ matches the nominal 1 - alpha across multiple random calibration/test
 splits. Conformal prediction is distribution-free under exchangeability;
 these tests use i.i.d. samples so exchangeability holds by construction.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -57,7 +58,7 @@ def test_coverage_matches_nominal_on_iid_data():
     rng_master = np.random.default_rng(42)
     target = 0.90
     covs = []
-    for trial in range(30):
+    for _trial in range(30):
         seed = int(rng_master.integers(1_000_000))
         rng = np.random.default_rng(seed)
         # Calibration absolute residuals from N(0, 1)
@@ -92,6 +93,7 @@ def test_evaluate_mean_width():
 
 def test_calibrate_and_predict_endtoend():
     """Mock model wrapper to check the end-to-end path."""
+
     class _FakeModel:
         def __init__(self, slope: float = 1.0, intercept: float = 0.0):
             self.slope, self.intercept = slope, intercept
@@ -106,9 +108,7 @@ def test_calibrate_and_predict_endtoend():
     y_test = X_test[:, 0] + rng.normal(0, 1, 2000)
 
     model = _FakeModel(slope=1.0)
-    result = conformal.calibrate_and_predict(
-        model, X_calib, y_calib, X_test, alpha=0.1
-    )
+    result = conformal.calibrate_and_predict(model, X_calib, y_calib, X_test, alpha=0.1)
     assert result["calib_n"] == 500
     assert result["pred"].shape == (2000,)
     assert result["lower"].shape == (2000,)

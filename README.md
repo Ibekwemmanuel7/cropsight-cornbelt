@@ -310,12 +310,30 @@ git clone https://github.com/Ibekwemmanuel7/cropsight-cornbelt.git
 cd cropsight-cornbelt
 ```
 
-### 2. Create and activate the environment
+### 2. Install the package
+The project is a standard pip-installable package with optional extras for the heavy scientific deps. Pick the install that matches what you need:
+
 ```bash
-conda create -n cropsight python=3.10 -y
-conda activate cropsight
-pip install -r requirements.txt
+# Core only (in-season feature builders, leakage audit, conformal, FastAPI)
+pip install -e .
+
+# Plus modeling deps (xgboost, torch, shap)
+pip install -e ".[modeling]"
+
+# Plus geospatial data deps (Earth Engine, cdsapi, rasterio, etc.)
+pip install -e ".[geo]"
+
+# Plus visualization deps (matplotlib, plotly, streamlit)
+pip install -e ".[viz]"
+
+# Plus dev tools (pytest, ruff, pre-commit, httpx)
+pip install -e ".[dev]"
+
+# Everything
+pip install -e ".[all]"
 ```
+
+A conda env is optional; a plain `python -m venv .venv && source .venv/bin/activate` works fine.
 
 ### 3. Configure API keys
 Create a `.env` file in the project root:
@@ -335,44 +353,64 @@ Open and run:
 2. `module2_feature_engineering.ipynb`
 3. `module3_modeling.ipynb`
 
-### 5. Launch the dashboard
+### 5. Build the in-season feature matrices and train models
+```bash
+# Generate feature_matrix_k{K}_phenology.parquet for K in {16, 20, 24, 28, 32, 36}
+python scripts/build_in_season_features.py
+
+# Train one model per K with split-conformal 90% intervals
+python scripts/train_in_season_models.py
+
+# Plot the horizon leaderboard
+python scripts/plot_horizon_leaderboard.py
+
+# Serve the forecast API on http://localhost:8000  (auto docs at /docs)
+python scripts/serve_api.py
+```
+
+### 6. Optional: launch the Streamlit hindcast dashboard
 ```bash
 streamlit run dashboard.py
 ```
 
 ---
 
+## Development
+
+The project uses standard modern-Python tooling — `pyproject.toml` for packaging and tool config, `ruff` for lint + format, `pytest` for tests, `pre-commit` for git hooks, and GitHub Actions for CI on every push and PR (`.github/workflows/ci.yml`).
+
+```bash
+# One-time setup
+pip install -e ".[dev]"
+pre-commit install
+
+# Day-to-day
+python -m ruff check .          # lint
+python -m ruff format .         # auto-format
+python -m pytest                # run all tests (34 cases at last count)
+python -m pytest -k conformal   # run a subset
+```
+
+CI runs lint + format check + the full test suite on Python 3.10 / 3.11 / 3.12 across every push to `main` and every pull request. Tests that require local data files (the parquets under `data/interim/`) are skipped automatically in CI; they run locally once you've executed `scripts/build_in_season_features.py` and `scripts/train_in_season_models.py`.
+
+Pre-commit hooks (configured in `.pre-commit-config.yaml`) run ruff, end-of-file fixer, trailing whitespace, and a check for accidentally committed large files. If a hook fails, the commit is blocked until you fix the issue or re-stage the auto-fixed files.
+
+---
+
 ## Requirements
 
-```
-earthengine-api
-geemap
-cdsapi
-requests
-pandas
-geopandas
-xarray
-rasterio
-shapely
-tqdm
-python-dotenv
-zarr
-netCDF4
-h5netcdf
-matplotlib
-scipy
-numpy
-pyarrow
-xgboost
-torch
-shap
-scikit-learn
-joblib
-streamlit
-plotly
-```
+All runtime and development dependencies are declared in [`pyproject.toml`](pyproject.toml). The legacy `requirements.txt` is kept for reference but `pip install -e ".[all]"` is the canonical install path. Quick reference of the extras:
 
-Install all at once:
+| Extra | Purpose | Notable packages |
+|---|---|---|
+| (default) | Core feature pipeline + API | numpy, pandas, scipy, scikit-learn, fastapi, uvicorn |
+| `modeling` | Gradient boosting, PINN, SHAP | xgboost, torch, shap |
+| `geo` | Geospatial data ingestion | earthengine-api, cdsapi, rasterio, geopandas, xarray |
+| `viz` | Charts and dashboard | matplotlib, plotly, streamlit |
+| `dev` | Tests and linting | pytest, ruff, pre-commit, httpx |
+| `all` | All of the above | — |
+
+If you really want the old all-at-once install:
 ```bash
 pip install -r requirements.txt
 ```

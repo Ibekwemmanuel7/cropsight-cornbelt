@@ -20,6 +20,7 @@ Outputs at week K:
     water_stress_frac (== AET / PET) - this is also the PINN physics constraint
     soil_water_deficit_mm, water_stress_days, drought_index
 """
+
 from __future__ import annotations
 
 

@@ -23,29 +23,37 @@ vci_window_means_to_week(vci_df, week_k) -> pd.DataFrame
 
 See docs/specs/in_season_pipeline.md for the full spec.
 """
+
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
 from scipy import signal
 from scipy.interpolate import UnivariateSpline
 
-
 DEFAULT_DOY_GRID = np.arange(60, 331)  # early March through late November
 
 # Phenological windows (DOY ranges) for US Corn Belt corn
 WINDOWS: dict[str, tuple[int, int]] = {
     "vegetative": (130, 180),
-    "silking":    (180, 220),
-    "grainfill":  (220, 270),
+    "silking": (180, 220),
+    "grainfill": (220, 270),
 }
 
 PHENOLOGY_FEATURE_KEYS: list[str] = [
-    "sos_doy", "eos_doy", "peak_ndvi", "peak_doy", "season_length",
-    "integrated_ndvi", "greenup_rate", "senescence_rate",
-    "ndvi_vegetative", "ndvi_silking", "ndvi_grainfill",
+    "sos_doy",
+    "eos_doy",
+    "peak_ndvi",
+    "peak_doy",
+    "season_length",
+    "integrated_ndvi",
+    "greenup_rate",
+    "senescence_rate",
+    "ndvi_vegetative",
+    "ndvi_silking",
+    "ndvi_grainfill",
 ]
 
 
@@ -89,9 +97,7 @@ def smooth_truncated(
         fitted_window = np.interp(doy_grid[in_window], d_in, v_in)
 
     if fitted_window.size > 21:
-        fitted_window = np.clip(
-            signal.savgol_filter(fitted_window, 21, 3), -0.1, 1.0
-        )
+        fitted_window = np.clip(signal.savgol_filter(fitted_window, 21, 3), -0.1, 1.0)
 
     fitted[in_window] = fitted_window
     return fitted
@@ -132,7 +138,7 @@ def extract_phenology_to_week(
 
     # SOS = first DOY >= 100 where smoothed NDVI exceeds threshold
     sos_idx = None
-    for i, (dy, ab) in enumerate(zip(obs_doys, above_threshold)):
+    for i, (dy, ab) in enumerate(zip(obs_doys, above_threshold, strict=False)):
         if dy >= 100 and ab:
             sos_idx = i
             break
@@ -173,11 +179,7 @@ def extract_phenology_to_week(
 
     # Senescence rate: requires at least 2 post-peak observations
     post_peak_count = int((obs_doys > peak_doy).sum())
-    if (
-        not np.isnan(eos_doy)
-        and peak_idx < len(obs_vals) - 2
-        and post_peak_count >= 2
-    ):
+    if not np.isnan(eos_doy) and peak_idx < len(obs_vals) - 2 and post_peak_count >= 2:
         out["senescence_rate"] = float(
             (obs_vals[-1] - peak_val) / max(obs_doys[-1] - peak_doy, 1.0)
         )

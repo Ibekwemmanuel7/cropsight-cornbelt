@@ -32,11 +32,11 @@ Usage:
 Output files land in data/raw/era5/era5_<varshort>_<year>.nc and can be loaded
 with xarray.open_dataset().
 """
+
 from __future__ import annotations
 
 import argparse
 import logging
-import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -56,7 +56,7 @@ VARIABLES = {
 }
 
 YEARS_DEFAULT = list(range(2000, 2024))
-MONTHS = [f"{m:02d}" for m in range(3, 12)]          # Mar-Nov
+MONTHS = [f"{m:02d}" for m in range(3, 12)]  # Mar-Nov
 DAYS = [f"{d:02d}" for d in range(1, 32)]
 HOURS = [f"{h:02d}:00" for h in range(0, 24)]
 

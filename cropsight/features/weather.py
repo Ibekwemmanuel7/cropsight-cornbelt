@@ -25,6 +25,7 @@ Planned API
 
 All return one row per (fips, year) with cumulative-to-DOY=K*7 values.
 """
+
 from __future__ import annotations
 
 

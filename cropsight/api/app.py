@@ -16,9 +16,9 @@ Run with:
 or
     python scripts/serve_api.py
 """
+
 from __future__ import annotations
 
-from typing import Optional
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query
@@ -26,8 +26,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from . import schemas
 from .store import ForecastStore, get_store_for_path
 
-
-_store: Optional[ForecastStore] = None
+_store: ForecastStore | None = None
 
 
 def get_store() -> ForecastStore:
@@ -37,7 +36,7 @@ def get_store() -> ForecastStore:
     return _store
 
 
-def create_app(data_dir: Optional[str | Path] = None) -> FastAPI:
+def create_app(data_dir: str | Path | None = None) -> FastAPI:
     """
     Build a FastAPI app. Optionally point at a custom data dir (used in tests).
     """
@@ -66,7 +65,8 @@ def create_app(data_dir: Optional[str | Path] = None) -> FastAPI:
             note=(
                 "Preview leaderboard - rerun train_in_season_models.py with "
                 "xgboost installed for production numbers."
-                if store.backend != "xgboost" else None
+                if store.backend != "xgboost"
+                else None
             ),
         )
 
@@ -87,16 +87,14 @@ def create_app(data_dir: Optional[str | Path] = None) -> FastAPI:
 
     @app.get("/forecast", response_model=schemas.Forecast, tags=["forecast"])
     def forecast(
-        fips: str = Query(..., min_length=5, max_length=5,
-                          description="5-digit county FIPS code."),
+        fips: str = Query(..., min_length=5, max_length=5, description="5-digit county FIPS code."),
         week: int = Query(..., description="Forecast week K (16..40)."),
         store: ForecastStore = Depends(get_store),
     ):
         if week not in store.weeks_available:
             raise HTTPException(
                 status_code=400,
-                detail=f"week K={week} not available. "
-                       f"Available: {store.weeks_available}",
+                detail=f"week K={week} not available. Available: {store.weeks_available}",
             )
         result = store.get_forecast(fips, week)
         if result is None:
@@ -116,14 +114,10 @@ def create_app(data_dir: Optional[str | Path] = None) -> FastAPI:
         store: ForecastStore = Depends(get_store),
     ):
         if len(fips) != 5:
-            raise HTTPException(
-                status_code=400, detail="fips must be a 5-digit county code."
-            )
+            raise HTTPException(status_code=400, detail="fips must be a 5-digit county code.")
         forecasts_raw = store.get_season(fips)
         if not forecasts_raw:
-            raise HTTPException(
-                status_code=404, detail=f"no forecasts for fips={fips}"
-            )
+            raise HTTPException(status_code=404, detail=f"no forecasts for fips={fips}")
         year = forecasts_raw[0]["year"]
         return schemas.SeasonForecast(
             fips=fips,

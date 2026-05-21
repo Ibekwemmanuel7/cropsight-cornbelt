@@ -5,6 +5,7 @@ The goal is to catch leakage of post-cutoff data into features. Each test
 builds a synthetic NDVI series with known structure, smooths it at a chosen
 week K, and asserts properties of the output.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -17,7 +18,7 @@ def _synthetic_season(amp: float = 0.8, peak_doy: int = 200) -> tuple[np.ndarray
     """Bell-curve NDVI peaking at peak_doy with amplitude `amp`. 16-day cadence."""
     doys = np.arange(60, 331, 16)
     width = 60.0
-    ndvi = 0.15 + amp * np.exp(-((doys - peak_doy) / width) ** 2)
+    ndvi = 0.15 + amp * np.exp(-(((doys - peak_doy) / width) ** 2))
     return doys, ndvi
 
 
@@ -27,9 +28,7 @@ def test_smooth_truncated_respects_cutoff():
     smooth_k28 = phenology.smooth_truncated(doys, ndvi, week_k=28)  # cutoff DOY 196
 
     grid = phenology.DEFAULT_DOY_GRID
-    assert np.all(np.isnan(smooth_k28[grid > 196])), (
-        "smooth_truncated leaked into doy > cutoff"
-    )
+    assert np.all(np.isnan(smooth_k28[grid > 196])), "smooth_truncated leaked into doy > cutoff"
     # And there should be valid output up to the cutoff
     assert np.isfinite(smooth_k28[grid <= 196]).sum() > 50
 

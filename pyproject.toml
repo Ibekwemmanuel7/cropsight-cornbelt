@@ -1,0 +1,151 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cropsight-cornbelt"
+version = "0.1.0"
+description = "In-season corn yield forecasting for the US Corn Belt using satellite remote sensing and physics-informed ML."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Emmanuel Ibekwe" },
+]
+keywords = [
+    "agriculture",
+    "remote-sensing",
+    "machine-learning",
+    "crop-yield-forecasting",
+    "physics-informed-neural-networks",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+
+# Runtime deps: minimum needed to run the in-season feature builders,
+# the leakage audit, the conformal module, and the FastAPI service.
+# Heavy scientific deps (torch, xgboost, GEE) live in extras so the core
+# install stays light.
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    "scipy>=1.11",
+    "scikit-learn>=1.3",
+    "tqdm>=4.66",
+    "joblib>=1.3",
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "pydantic>=2.5",
+]
+
+[project.optional-dependencies]
+modeling = [
+    "xgboost>=2.0",
+    "torch>=2.1",
+    "shap>=0.44",
+]
+geo = [
+    "earthengine-api>=0.1.380",
+    "geemap>=0.32",
+    "cdsapi>=0.7",
+    "geopandas>=0.14",
+    "xarray>=2023.12",
+    "rasterio>=1.3",
+    "shapely>=2.0",
+    "netCDF4>=1.6",
+    "h5netcdf>=1.3",
+    "zarr>=2.16",
+]
+viz = [
+    "matplotlib>=3.8",
+    "plotly>=5.18",
+    "streamlit>=1.29",
+]
+dev = [
+    "pytest>=7.4",
+    "httpx>=0.27",
+    "ruff>=0.5",
+    "pre-commit>=3.6",
+]
+all = [
+    "cropsight-cornbelt[modeling,geo,viz,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/Ibekwemmanuel7/cropsight-cornbelt"
+Repository = "https://github.com/Ibekwemmanuel7/cropsight-cornbelt"
+Issues = "https://github.com/Ibekwemmanuel7/cropsight-cornbelt/issues"
+
+[tool.setuptools.packages.find]
+include = ["cropsight*"]
+exclude = ["tests*", "scripts*", "docs*", "data*"]
+
+# ---- pytest -----------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+addopts = [
+    "-ra",
+    "--strict-config",
+    "--strict-markers",
+    "-p", "no:cacheprovider",
+]
+markers = [
+    "slow: marks tests as slow (deselect with -m 'not slow')",
+]
+
+# ---- ruff -------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [
+    "data",
+    "models",
+    ".ipynb_checkpoints",
+    "module1_data_ingestion.ipynb",
+    "module2_feature_engineering.ipynb",
+    "module3_modeling.ipynb",
+    "dashboard.py",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "B",     # flake8-bugbear
+    "UP",    # pyupgrade
+    "SIM",   # flake8-simplify
+    "RUF",   # ruff-specific
+]
+ignore = [
+    "E501",  # line length - we have long markdown/string lines
+    "B008",  # function call in default arg - common in FastAPI Depends()
+    "SIM108", # ternary - sometimes if/else is clearer
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["F401", "F811"]   # fixtures and imports often unused-looking
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ---- mypy (lenient for now) -------------------------------------------------
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+files = ["cropsight"]

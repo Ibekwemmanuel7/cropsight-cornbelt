@@ -19,6 +19,7 @@ or curl examples:
 Production note: this runner is for development. For deployment use a
 production ASGI server (uvicorn --workers, hypercorn, or behind nginx).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -33,8 +34,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
-    parser.add_argument("--reload", action="store_true",
-                        help="Auto-reload on source changes (development only).")
+    parser.add_argument(
+        "--reload", action="store_true", help="Auto-reload on source changes (development only)."
+    )
     args = parser.parse_args()
 
     try:

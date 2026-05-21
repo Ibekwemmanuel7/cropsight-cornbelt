@@ -29,6 +29,7 @@ predict_with_interval(model, X, q_alpha) -> (pred, lower, upper)
 evaluate_coverage(y_true, lower, upper) -> float
 evaluate_mean_width(lower, upper) -> float
 """
+
 from __future__ import annotations
 
 import math
@@ -63,7 +64,7 @@ def split_conformal_quantile(residuals: np.ndarray, alpha: float = 0.1) -> float
 
     # Conformal correction: rank = ceil((n+1)*(1-alpha))
     # Clamp to n to avoid index overflow on small calibration sets.
-    rank = int(math.ceil((n + 1) * (1.0 - alpha)))
+    rank = math.ceil((n + 1) * (1.0 - alpha))
     rank = min(rank, n)
     sorted_resid = np.sort(residuals)
     return float(sorted_resid[rank - 1])

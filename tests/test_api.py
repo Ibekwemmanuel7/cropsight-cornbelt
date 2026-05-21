@@ -5,6 +5,7 @@ These use FastAPI's TestClient and the real data files in data/interim/
 produced by scripts/train_in_season_models.py. If those files are absent
 the suite is skipped with a clear message.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,7 +15,6 @@ from fastapi.testclient import TestClient
 
 from cropsight.api import create_app
 from cropsight.api.store import DEFAULT_DATA_DIR
-
 
 _LEADERBOARD_EXISTS = (DEFAULT_DATA_DIR / "horizon_leaderboard.parquet").exists()
 

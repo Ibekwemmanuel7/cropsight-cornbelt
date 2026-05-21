@@ -19,9 +19,10 @@ Failure modes
 - strict=False: returns the list of warnings without raising. Use for
   diagnostic reports.
 """
+
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import pandas as pd
 
@@ -34,15 +35,15 @@ class LeakageError(AssertionError):
 # Key: feature column name. Value: earliest DOY at which the feature can have
 # any non-NaN values.
 PHENOLOGY_GATE_DOY: dict[str, int] = {
-    "eos_doy":         287,   # End-of-season requires late-October data
-    "season_length":   287,   # Requires both SOS and EOS
-    "senescence_rate": 287,   # Requires post-peak observations
-    "ndvi_vegetative": 130,   # Vegetative window starts DOY 130
-    "ndvi_silking":    180,   # Silking window starts DOY 180
-    "ndvi_grainfill":  220,   # Grainfill window starts DOY 220
-    "vci_vegetative":  130,
-    "vci_silking":     180,
-    "vci_grainfill":   220,
+    "eos_doy": 287,  # End-of-season requires late-October data
+    "season_length": 287,  # Requires both SOS and EOS
+    "senescence_rate": 287,  # Requires post-peak observations
+    "ndvi_vegetative": 130,  # Vegetative window starts DOY 130
+    "ndvi_silking": 180,  # Silking window starts DOY 180
+    "ndvi_grainfill": 220,  # Grainfill window starts DOY 220
+    "vci_vegetative": 130,
+    "vci_silking": 180,
+    "vci_grainfill": 220,
 }
 
 
@@ -110,17 +111,11 @@ def audit_train_val_test_split(
     val_years = set(val_df["year"].unique())
     test_years = set(test_df["year"].unique())
     if train_years & val_years:
-        warnings.append(
-            f"train and val share years: {sorted(train_years & val_years)}"
-        )
+        warnings.append(f"train and val share years: {sorted(train_years & val_years)}")
     if train_years & test_years:
-        warnings.append(
-            f"train and test share years: {sorted(train_years & test_years)}"
-        )
+        warnings.append(f"train and test share years: {sorted(train_years & test_years)}")
     if val_years & test_years:
-        warnings.append(
-            f"val and test share years: {sorted(val_years & test_years)}"
-        )
+        warnings.append(f"val and test share years: {sorted(val_years & test_years)}")
     return warnings
 
 

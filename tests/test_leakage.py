@@ -5,6 +5,7 @@ These cover the audit functions that gate model fitting in the in-season
 pipeline. The audits must catch obvious violations and must not flag a
 correct feature matrix.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -22,19 +23,21 @@ def _clean_k28_matrix(n: int = 100) -> pd.DataFrame:
     rng = np.random.default_rng(0)
     fips = [f"{17001 + i:05d}" for i in range(n)]
     years = rng.integers(2000, 2024, size=n)
-    return pd.DataFrame({
-        "fips": fips,
-        "year": years,
-        "peak_ndvi": rng.uniform(0.5, 0.95, n),
-        "peak_doy":  rng.uniform(140, 196, n),
-        "ndvi_silking": rng.uniform(0.5, 0.95, n),
-        "ndvi_grainfill": np.nan,   # gated at K=28
-        "eos_doy": np.nan,           # gated at K=28
-        "season_length": np.nan,     # gated at K=28
-        "senescence_rate": np.nan,   # gated at K=28
-        "year_trend": years - 2000,
-        "awc": rng.uniform(0.14, 0.21, n),
-    })
+    return pd.DataFrame(
+        {
+            "fips": fips,
+            "year": years,
+            "peak_ndvi": rng.uniform(0.5, 0.95, n),
+            "peak_doy": rng.uniform(140, 196, n),
+            "ndvi_silking": rng.uniform(0.5, 0.95, n),
+            "ndvi_grainfill": np.nan,  # gated at K=28
+            "eos_doy": np.nan,  # gated at K=28
+            "season_length": np.nan,  # gated at K=28
+            "senescence_rate": np.nan,  # gated at K=28
+            "year_trend": years - 2000,
+            "awc": rng.uniform(0.14, 0.21, n),
+        }
+    )
 
 
 def test_clean_matrix_passes_audit():
@@ -59,12 +62,14 @@ def test_leaked_eos_raises():
 
 def test_audit_static_features_detects_variance():
     """If soil varies within (fips, year), that's a bug."""
-    df = pd.DataFrame({
-        "fips": ["17001", "17001", "17001"],
-        "year": [2020, 2020, 2020],
-        "awc": [0.18, 0.20, 0.18],  # varies within group - violation
-        "year_trend": [20, 20, 20],
-    })
+    df = pd.DataFrame(
+        {
+            "fips": ["17001", "17001", "17001"],
+            "year": [2020, 2020, 2020],
+            "awc": [0.18, 0.20, 0.18],  # varies within group - violation
+            "year_trend": [20, 20, 20],
+        }
+    )
     warnings = leakage.audit_static_features(df, ["awc", "year_trend"])
     assert any("awc" in w for w in warnings)
     assert all("year_trend" not in w for w in warnings)

@@ -1,7 +1,6 @@
 """Pydantic response models for the cropsight API."""
-from __future__ import annotations
 
-from typing import Optional
+from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
@@ -11,7 +10,7 @@ class Health(BaseModel):
     n_counties: int
     weeks_available: list[int]
     backend: str
-    note: Optional[str] = None
+    note: str | None = None
 
 
 class Forecast(BaseModel):
@@ -25,9 +24,7 @@ class Forecast(BaseModel):
     q_alpha: float = Field(..., description="Conformal interval half-width (bu/acre).")
     alpha: float = Field(..., description="Miscoverage rate, e.g. 0.1 for 90% interval.")
     backend: str = Field(..., description="Model backend used (xgboost / sklearn_hgb).")
-    observed_yield: Optional[float] = Field(
-        None, description="USDA NASS actual yield, if known."
-    )
+    observed_yield: float | None = Field(None, description="USDA NASS actual yield, if known.")
 
 
 class SeasonForecast(BaseModel):
@@ -43,8 +40,8 @@ class LeaderboardRow(BaseModel):
     rmse: float
     mae: float
     r2: float
-    coverage: Optional[float] = None
-    mean_width: Optional[float] = None
+    coverage: float | None = None
+    mean_width: float | None = None
     n_features: int
     backend: str
     alpha: float

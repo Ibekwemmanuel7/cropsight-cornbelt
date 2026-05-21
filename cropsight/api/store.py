@@ -6,15 +6,14 @@ in O(1) from in-memory dicts.
 Single source of truth: data/interim/. The store reads only files produced
 by scripts/train_in_season_models.py.
 """
+
 from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATA_DIR = REPO_ROOT / "data" / "interim"
@@ -23,7 +22,7 @@ DEFAULT_DATA_DIR = REPO_ROOT / "data" / "interim"
 class ForecastStore:
     """In-memory predictions indexed by (fips, year, week_k)."""
 
-    def __init__(self, data_dir: Optional[Path] = None):
+    def __init__(self, data_dir: Path | None = None):
         self.data_dir = Path(data_dir) if data_dir else DEFAULT_DATA_DIR
         self.leaderboard: pd.DataFrame = pd.DataFrame()
         # predictions[week_k] = DataFrame with columns
@@ -45,8 +44,11 @@ class ForecastStore:
         self.leaderboard = pd.read_parquet(leader_path)
         if not self.leaderboard.empty:
             self.backend = str(self.leaderboard["backend"].iloc[0])
-            self.alpha = float(self.leaderboard["alpha"].iloc[0]) \
-                if "alpha" in self.leaderboard.columns else 0.1
+            self.alpha = (
+                float(self.leaderboard["alpha"].iloc[0])
+                if "alpha" in self.leaderboard.columns
+                else 0.1
+            )
 
         self.predictions = {}
         for K in sorted(self.leaderboard["week_k"].unique().tolist()):
@@ -69,7 +71,7 @@ class ForecastStore:
             codes.update(df["fips"].unique().tolist())
         return sorted(codes)
 
-    def get_forecast(self, fips: str, week_k: int) -> Optional[dict]:
+    def get_forecast(self, fips: str, week_k: int) -> dict | None:
         if week_k not in self.predictions:
             return None
         df = self.predictions[week_k]
@@ -113,7 +115,7 @@ class ForecastStore:
         return rows.to_dict("records")
 
 
-def get_store_for_path(path: Optional[str | Path] = None) -> ForecastStore:
+def get_store_for_path(path: str | Path | None = None) -> ForecastStore:
     """
     Factory used by tests to pass an alternative data dir. The default
     reads from `cropsight/data/interim/` via REPO_ROOT.

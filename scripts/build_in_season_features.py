@@ -10,6 +10,7 @@ Usage:
     python scripts/build_in_season_features.py --weeks 28            # just K=28
     python scripts/build_in_season_features.py --weeks 20 28 36      # subset
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,7 +25,7 @@ from tqdm import tqdm
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from cropsight.features import phenology, leakage  # noqa: E402
+from cropsight.features import leakage, phenology  # noqa: E402
 
 DATA_RAW = REPO / "data" / "raw"
 DATA_INTERIM = REPO / "data" / "interim"
@@ -90,7 +91,7 @@ def attach_static(feature_df: pd.DataFrame) -> pd.DataFrame:
 def attach_target(feature_df: pd.DataFrame) -> pd.DataFrame:
     yld_path = DATA_RAW / "nass" / "corn_yield_county_2000_2023.csv"
     if not yld_path.exists():
-        print(f"warn: NASS yield file missing; skipping target column")
+        print("warn: NASS yield file missing; skipping target column")
         return feature_df
     yld = pd.read_csv(yld_path, dtype={"fips": str})
     yld = yld[["fips", "year", "yield_bu_acre"]]
@@ -103,7 +104,7 @@ def build_one_week(
     baseline_years: list[int],
     out_dir: Path,
 ) -> Path:
-    print(f"\n----- K={week_k} (cutoff DOY {week_k*7}) -----")
+    print(f"\n----- K={week_k} (cutoff DOY {week_k * 7}) -----")
 
     ndvi_k = truncate_ndvi(ndvi_all, week_k)
     input_warnings = leakage.audit_ndvi_input_doy(ndvi_k, week_k)
@@ -112,11 +113,11 @@ def build_one_week(
 
     t0 = time.time()
     pheno = build_phenology(ndvi_k, week_k)
-    print(f"  phenology   {pheno.shape}  {time.time()-t0:.1f}s")
+    print(f"  phenology   {pheno.shape}  {time.time() - t0:.1f}s")
 
     t0 = time.time()
     vci = build_vci(ndvi_k, week_k, baseline_years=baseline_years)
-    print(f"  vci windows {vci.shape}  {time.time()-t0:.1f}s")
+    print(f"  vci windows {vci.shape}  {time.time() - t0:.1f}s")
 
     feats = pheno.merge(vci, on=["fips", "year"], how="left")
     feats = attach_static(feats)
@@ -133,18 +134,22 @@ def build_one_week(
 
     out_path = out_dir / f"feature_matrix_k{week_k}_phenology.parquet"
     feats.to_parquet(out_path, index=False)
-    non_static = [c for c in feats.columns
-                  if c not in ("fips", "year", "yield_bu_acre", *static_cols)]
+    non_static = [
+        c for c in feats.columns if c not in ("fips", "year", "yield_bu_acre", *static_cols)
+    ]
     n_obs_features = sum(int(feats[c].notna().any()) for c in non_static)
-    print(f"  wrote {out_path.name}  ({out_path.stat().st_size / 1e6:.2f} MB)  "
-          f"{n_obs_features}/{len(non_static)} dynamic features have data")
+    print(
+        f"  wrote {out_path.name}  ({out_path.stat().st_size / 1e6:.2f} MB)  "
+        f"{n_obs_features}/{len(non_static)} dynamic features have data"
+    )
     return out_path
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build in-season phenology features.")
     parser.add_argument(
-        "--weeks", "--week",
+        "--weeks",
+        "--week",
         nargs="+",
         type=int,
         default=DEFAULT_WEEKS,
@@ -176,7 +181,7 @@ def main() -> int:
     total_t0 = time.time()
     for K in args.weeks:
         build_one_week(ndvi_all, K, args.baseline_years, args.out_dir)
-    print(f"\nall {len(args.weeks)} weeks built in {time.time()-total_t0:.1f}s")
+    print(f"\nall {len(args.weeks)} weeks built in {time.time() - total_t0:.1f}s")
     return 0
 
 
