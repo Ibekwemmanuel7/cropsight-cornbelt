@@ -32,6 +32,42 @@ We ship **XGBoost + PINN as a calibrated pair**: XGBoost provides the headline p
 
 ---
 
+## In-season forecasting (preview)
+
+The full-season numbers above are a hindcast — produced after the season ends, using all 24 NDVI composites and full-season weather aggregates. The product extension is **in-season forecasting**: regenerate the forecast each week of the growing season using only data observable up to that week, with strict leakage controls.
+
+Six forecast horizons are produced, indexed by week K (cutoff DOY = K · 7):
+
+| K | DOY | Calendar | Phase | Features observable |
+|---|---|---|---|---|
+| 16 | 112 | mid-April | pre-planting | static only (soil, year trend) |
+| 20 | 140 | mid-May   | planting / emergence | + early NDVI, vegetative VCI |
+| 24 | 168 | mid-June  | vegetative | + vegetative window |
+| 28 | 196 | mid-July  | pre-silking | + silking (partial) |
+| 32 | 224 | mid-August | silking → grainfill | + silking (full) |
+| 36 | 252 | early Sept | grainfill | + grainfill (partial) |
+
+Per-week feature matrices are produced by [`scripts/build_in_season_features.py`](scripts/build_in_season_features.py); per-week models by [`scripts/train_in_season_models.py`](scripts/train_in_season_models.py). The leakage rule — no feature value may incorporate input data with DOY > K·7 — is enforced by [`cropsight/features/leakage.py`](cropsight/features/leakage.py) and verified by 16 pytest tests under [`tests/`](tests/).
+
+![Accuracy as a function of forecast week K: RMSE, MAE, and feature count](docs/images/horizon_leaderboard.png)
+
+**Preview leaderboard (NDVI/VCI features + static; weather features pending Phase 3):**
+
+| K | Cutoff DOY | Val (2022) RMSE | Test (2023) RMSE | Test (2023) MAE |
+|---|:---:|:---:|:---:|:---:|
+| 16 | 112 | 12.43 | 12.49 | 10.05 |
+| 20 | 140 | 14.13 | 12.21 | 9.71 |
+| 24 | 168 | 12.96 | 12.90 | 10.21 |
+| 28 | 196 | 13.01 | 13.88 | 10.80 |
+| 32 | 224 | **11.99** | 13.43 | 10.59 |
+| 36 | 252 | 12.73 | 12.45 | **9.67** |
+
+Honest reading of the preview: the val year (2022) shows the expected pattern — accuracy improves through K=32 once silking is fully observed. The test year (2023) was close to trend, so the climatology baseline (K=16) is already strong and the extra NDVI signal does not yet help. The accuracy curve is bounded by the current proxy weather features, which have no daily temporal structure and cannot be cumulatively trimmed to week K. Replacing them with real ERA5 (Phase 3, in progress — see [`scripts/download_era5.py`](scripts/download_era5.py)) is expected to produce the cleanly monotonic accuracy curve the spec calls for, especially in stress years like 2012 or 2020. The preview uses sklearn HistGradientBoostingRegressor as a stand-in; re-run with xgboost for production numbers.
+
+Detailed plan: [`docs/specs/in_season_pipeline.md`](docs/specs/in_season_pipeline.md).
+
+---
+
 ## System architecture
 
 ```
