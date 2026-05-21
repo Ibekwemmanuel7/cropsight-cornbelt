@@ -27,6 +27,8 @@ This project is the second in a series of end-to-end atmospheric/geoscience ML s
 
 > XGBoost RMSE of 12.5 bu/acre represents ~6% error on a ~200 bu/acre baseline - competitive with published academic benchmarks for county-level yield forecasting using satellite data alone, without in-season field surveys.
 
+![County-level test-set predictions vs. observed yield, with the 2012 drought and 2020 strong-year envelopes highlighted](docs/images/model_predictions_test.png)
+
 ---
 
 ## System architecture
@@ -70,6 +72,8 @@ This project is the second in a series of end-to-end atmospheric/geoscience ML s
 **Target region:** Iowa (IA), Illinois (IL), Indiana (IN) - 293 counties  
 **Ground truth:** USDA NASS county-level corn grain yield, bu/acre
 
+![USDA NASS county-level corn yield, 2000–2023. The 2012 drought is visible as the dark horizontal band](docs/images/nass_yield_overview.png)
+
 ---
 
 ## Feature engineering
@@ -87,6 +91,8 @@ Extracted from MODIS NDVI time series using Savitzky-Golay smoothing + cubic spl
 - **Window means** - mean NDVI and VCI during vegetative, silking, and grain-fill phases
 
 The **silking window (DOY 180–220)** is the most yield-critical period; heat or drought stress during pollination causes irreversible yield loss.
+
+![Mean NDVI seasonal profile by year, with phenological phases (planting / vegetative / silking / grain fill) overlaid](docs/images/ndvi_seasonal_profile.png)
 
 ### Weather stress indices (11)
 Computed per phenological window rather than calendar months - agronomically the right unit:
@@ -130,6 +136,8 @@ Input: (batch, 23 time-varying features, 1)  →  LSTM (hidden=128, layers=2)
 
 Training: AdamW, lr=1e-3, ReduceLROnPlateau, early stopping patience=25, gradient clipping=1.0.
 
+![CropLSTM training and validation loss across epochs](docs/images/lstm_training_curve.png)
+
 ### Stage 3C - CropPINN (physics-informed)
 Standard MLP (128→64→32→1) with a **hybrid loss function**:
 
@@ -166,6 +174,8 @@ From the correlation analysis on the 2000–2021 training set:
 | 7 | `sos_doy` | +0.371 | Later planting → shorter season → lower yield |
 | 8 | `heat_stress_silking` | −0.368 | Heat during pollination directly reduces kernel set |
 
+![Feature correlation matrix across the 40-feature input set, training years 2000–2021](docs/images/feature_correlation_matrix.png)
+
 The 2012 drought signal across key features:
 
 | Feature | 2012 (drought) | 2020 (good year) | Δ |
@@ -182,14 +192,16 @@ The 2012 drought signal across key features:
 ```
 cropsight-cornbelt/
 │
-├── notebooks/
-│   ├── module1_data_ingestion.ipynb      # Data download and validation
-│   ├── module2_feature_engineering.ipynb # Phenology, weather, water balance
-│   └── module3_modeling.ipynb            # XGBoost, LSTM, PINN, ensemble
+├── module1_data_ingestion.ipynb          # Data download and validation
+├── module2_feature_engineering.ipynb     # Phenology, weather, water balance
+├── module3_modeling.ipynb                # XGBoost, LSTM, PINN, ensemble
 │
 ├── dashboard.py                          # Streamlit dashboard (Module 4)
 │
-├── data/
+├── docs/
+│   └── images/                           # Preview figures used in this README
+│
+├── data/                                 # Gitignored - generated locally
 │   ├── raw/
 │   │   ├── nass/                         # USDA NASS yield CSVs
 │   │   ├── modis/                        # MODIS NDVI parquet files
@@ -205,7 +217,7 @@ cropsight-cornbelt/
 │       ├── predictions_full.parquet      # Full hindcast predictions
 │       └── predictions_test.parquet      # Test set predictions + CIs
 │
-├── models/
+├── models/                               # Gitignored - generated locally
 │   ├── xgboost_baseline.json             # Trained XGBoost model
 │   ├── lstm_best.pt                      # Best LSTM checkpoint
 │   ├── pinn_best.pt                      # Best PINN checkpoint
@@ -214,6 +226,7 @@ cropsight-cornbelt/
 │
 ├── .env                                  # API keys (never commit)
 ├── .gitignore
+├── LICENSE
 ├── requirements.txt
 └── README.md
 ```
@@ -224,7 +237,7 @@ cropsight-cornbelt/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/cropsight-cornbelt.git
+git clone https://github.com/Ibekwemmanuel7/cropsight-cornbelt.git
 cd cropsight-cornbelt
 ```
 
@@ -249,9 +262,9 @@ NASS_API_KEY=your_nass_key_here
 jupyter notebook
 ```
 Open and run:
-1. `notebooks/module1_data_ingestion.ipynb`
-2. `notebooks/module2_feature_engineering.ipynb`
-3. `notebooks/module3_modeling.ipynb`
+1. `module1_data_ingestion.ipynb`
+2. `module2_feature_engineering.ipynb`
+3. `module3_modeling.ipynb`
 
 ### 5. Launch the dashboard
 ```bash
@@ -347,7 +360,7 @@ If you use this codebase or methodology in your research, please cite:
   title     = {CropSight CornBelt: Physics-Informed Crop Yield Forecasting},
   year      = {2025},
   publisher = {GitHub},
-  url       = {https://github.com/YOUR_USERNAME/cropsight-cornbelt}
+  url       = {https://github.com/Ibekwemmanuel7/cropsight-cornbelt}
 }
 ```
 
